@@ -21,8 +21,8 @@ type Archetype struct {
 	Experience   int
 }
 
-// ReadFile reads all of the Archetypes in filename and returns that as a slice
-func ReadFile(filename string) []Archetype {
+// ReadArchetypeFile reads all of the Archetypes in filename and returns that as a slice
+func ReadArchetypeFile(filename string) []Archetype {
 
 	var archetypes []Archetype
 

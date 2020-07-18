@@ -1,0 +1,12 @@
+name:           J. Marcus Hart
+archetype:      The Aristocrat
+brawn:          0
+agility:        0
+intelligence:   2
+cunning:        2
+will:           0
+presence:       1
+experience:     50
+skills:
+    cool: 3
+    intimmidation: 2

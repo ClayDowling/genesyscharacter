@@ -8,7 +8,7 @@ import (
 var archetypes []Archetype
 
 func TestMain(m *testing.M) {
-	archetypes = ReadFile("testfile.arc")
+	archetypes = ReadArchetypeFile("testfile.arc")
 	os.Exit(m.Run())
 }
 
@@ -126,5 +126,22 @@ func Test_CalculateGivenBogusArchetypeReturnsError(t *testing.T) {
 	}
 	if err.Error() != "Unknown Archetype 'Bogus'" {
 		t.Errorf("Expected error Unknown Archetype 'Bogus', got \"%s\"", err.Error())
+	}
+}
+
+func Test_ReadCharacterFileReturnsCharacterFromFile(t *testing.T) {
+	c, err := ReadCharacterFile("testcharacter.gcr")
+	if err != nil {
+		t.Fatalf("Error loading file: %v", err)
+	}
+
+	if c.Skills["cool"] != 3 {
+		t.Errorf("Expected Cool 3, got %d", c.Skills["cool"])
+	}
+	if c.Name != "J. Marcus Hart" {
+		t.Errorf("Expected name 'J. Marcus Hart', got '%s'", c.Name)
+	}
+	if c.Experience != 50 {
+		t.Errorf("Expected Experience 50, got %d", c.Experience)
 	}
 }
