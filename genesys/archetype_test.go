@@ -1,4 +1,4 @@
-package genesyscharacter
+package genesys
 
 import (
 	"testing"
@@ -48,8 +48,17 @@ func does_archetype_match(expected Archetype, actual Archetype, t *testing.T) {
 func Test_ReadFileReturnsExpectedArchetypes(t *testing.T) {
 	actual := ReadFile("testfile.arc")
 
-	intellectual := Archetype{Name: "The Intellectual", Brawn: 2, Agility: 1, Intelligence: 3,
-		Cunning: 2, Will: 2, Presence: 2, Wound: 8, Strain: 12, Experience: 100}
+	intellectual := Archetype{
+		Name:         "The Intellectual",
+		Brawn:        2,
+		Agility:      1,
+		Intelligence: 3,
+		Cunning:      2,
+		Will:         2,
+		Presence:     2,
+		Wound:        8,
+		Strain:       12,
+		Experience:   100}
 	aristocrat := Archetype{
 		Name:         "The Aristocrat",
 		Brawn:        1,

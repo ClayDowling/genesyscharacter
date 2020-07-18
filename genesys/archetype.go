@@ -1,4 +1,4 @@
-package genesyscharacter
+package genesys
 
 import (
 	"io/ioutil"
