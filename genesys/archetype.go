@@ -9,16 +9,16 @@ import (
 
 // Archetype represents a character archetype, used to calculate starting values for a character
 type Archetype struct {
-	Name         string
-	Brawn        int
-	Agility      int
-	Intelligence int
-	Cunning      int
-	Will         int
-	Presence     int
-	Wound        int
-	Strain       int
-	Experience   int
+	Name       string
+	Brawn      int
+	Agility    int
+	Intellect  int
+	Cunning    int
+	Will       int
+	Presence   int
+	Wound      int
+	Strain     int
+	Experience int
 }
 
 // ReadArchetypeFile reads all of the Archetypes in filename and returns that as a slice

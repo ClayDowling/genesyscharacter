@@ -1,7 +1,7 @@
 - name: The Intellectual
   brawn: 2
   agility: 1
-  intelligence: 3
+  intellect: 3
   cunning: 2
   will: 2
   presence: 2
@@ -12,7 +12,7 @@
 - name: The Aristocrat
   brawn: 1
   agility: 2
-  intelligence: 2
+  intellect: 2
   cunning: 2
   will: 2
   presence: 3

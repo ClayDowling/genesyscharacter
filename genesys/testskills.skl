@@ -1,0 +1,4 @@
+- name: Athletics
+  ability: Brawn
+- name: Computers
+  ability: Intellect

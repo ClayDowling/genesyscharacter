@@ -21,8 +21,8 @@ func doesArchetypeMatch(expected Archetype, actual Archetype, t *testing.T) {
 	if actual.Agility != expected.Agility {
 		t.Errorf("Expected agility %d, got %d", expected.Agility, actual.Agility)
 	}
-	if actual.Intelligence != expected.Intelligence {
-		t.Errorf("Expected intelligence %d, got %d", expected.Intelligence, actual.Intelligence)
+	if actual.Intellect != expected.Intellect {
+		t.Errorf("Expected Intellect %d, got %d", expected.Intellect, actual.Intellect)
 	}
 	if actual.Cunning != expected.Cunning {
 		t.Errorf("Expected cunning %d, got %d", expected.Cunning, actual.Cunning)
@@ -49,27 +49,27 @@ func Test_ReadArchetypeFileReturnsExpectedArchetypes(t *testing.T) {
 	actual := ReadArchetypeFile("testfile.arc")
 
 	intellectual := Archetype{
-		Name:         "The Intellectual",
-		Brawn:        2,
-		Agility:      1,
-		Intelligence: 3,
-		Cunning:      2,
-		Will:         2,
-		Presence:     2,
-		Wound:        8,
-		Strain:       12,
-		Experience:   100}
+		Name:       "The Intellectual",
+		Brawn:      2,
+		Agility:    1,
+		Intellect:  3,
+		Cunning:    2,
+		Will:       2,
+		Presence:   2,
+		Wound:      8,
+		Strain:     12,
+		Experience: 100}
 	aristocrat := Archetype{
-		Name:         "The Aristocrat",
-		Brawn:        1,
-		Agility:      2,
-		Intelligence: 2,
-		Cunning:      2,
-		Will:         2,
-		Presence:     3,
-		Wound:        10,
-		Strain:       10,
-		Experience:   100}
+		Name:       "The Aristocrat",
+		Brawn:      1,
+		Agility:    2,
+		Intellect:  2,
+		Cunning:    2,
+		Will:       2,
+		Presence:   3,
+		Wound:      10,
+		Strain:     10,
+		Experience: 100}
 
 	doesArchetypeMatch(intellectual, actual[0], t)
 	doesArchetypeMatch(aristocrat, actual[1], t)

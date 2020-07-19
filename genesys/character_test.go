@@ -1,14 +1,21 @@
 package genesys
 
 import (
+	"log"
 	"os"
 	"testing"
 )
 
 var archetypes []Archetype
+var skills []Skill
 
 func TestMain(m *testing.M) {
+	var err error
 	archetypes = ReadArchetypeFile("testfile.arc")
+	skills, err = ReadSkillFile("testskills.skl")
+	if err != nil {
+		log.Fatal(err.Error())
+	}
 	os.Exit(m.Run())
 }
 
@@ -38,8 +45,8 @@ func IsExpectedCalculatedCharacter(cc *CalculatedCharacter, expected *Calculated
 	if cc.Experience != expected.Experience {
 		t.Errorf("Expected Experience %d, got %d", expected.Experience, cc.Experience)
 	}
-	if cc.Intelligence != expected.Intelligence {
-		t.Errorf("Expected Intelligence %d, got %d", expected.Intelligence, cc.Intelligence)
+	if cc.Intellect != expected.Intellect {
+		t.Errorf("Expected Intellect %d, got %d", expected.Intellect, cc.Intellect)
 	}
 	if cc.Presence != expected.Presence {
 		t.Errorf("Expected Presence %d, got %d", expected.Presence, cc.Presence)
@@ -61,11 +68,11 @@ func Test_CalculateCharacter_WithArchetype_GivesCharacterWithArchetype(t *testin
 	expected.Brawn = a.Brawn
 	expected.Cunning = a.Cunning
 	expected.Experience = a.Experience
-	expected.Intelligence = a.Intelligence
+	expected.Intellect = a.Intellect
 	expected.Presence = a.Presence
 	expected.Will = a.Will
 
-	cc, _ := Calculate(c, archetypes)
+	cc, _ := Calculate(c, archetypes, skills)
 
 	IsExpectedCalculatedCharacter(cc, &expected, t)
 }
@@ -76,7 +83,7 @@ func Test_Calculate_CopiesCharacterNameToCalculatedCharacter(t *testing.T) {
 	c.Name = "Wilberforce"
 	c.Archetype = "The Intellectual"
 
-	cc, _ := Calculate(c, archetypes)
+	cc, _ := Calculate(c, archetypes, skills)
 
 	if cc.Name != c.Name {
 		t.Errorf("Expected name '%s', got '%s'", c.Name, cc.Name)
@@ -92,7 +99,7 @@ func Test_CalculateAddsCharacterTraitsToArchetypeTraits(t *testing.T) {
 	c.Brawn = 2
 	c.Cunning = 3
 	c.Experience = 4
-	c.Intelligence = 5
+	c.Intellect = 5
 	c.Name = "Floyd"
 	c.Presence = 7
 	c.Will = 8
@@ -105,12 +112,12 @@ func Test_CalculateAddsCharacterTraitsToArchetypeTraits(t *testing.T) {
 	expected.Brawn = c.Brawn + a.Brawn
 	expected.Cunning = c.Cunning + a.Cunning
 	expected.Experience = c.Experience + a.Experience
-	expected.Intelligence = c.Intelligence + a.Intelligence
+	expected.Intellect = c.Intellect + a.Intellect
 	expected.Name = c.Name
 	expected.Presence = c.Presence + a.Presence
 	expected.Will = c.Will + a.Will
 
-	cc, _ := Calculate(c, archetypes)
+	cc, _ := Calculate(c, archetypes, skills)
 
 	IsExpectedCalculatedCharacter(cc, &expected, t)
 
@@ -120,7 +127,7 @@ func Test_CalculateGivenBogusArchetypeReturnsError(t *testing.T) {
 	var c Character
 	c.Archetype = "Bogus"
 
-	_, err := Calculate(c, archetypes)
+	_, err := Calculate(c, archetypes, skills)
 	if err == nil {
 		t.Errorf("Expected earth shattering kaboom.  There was no earth shattering kaboom.")
 	}
@@ -135,8 +142,8 @@ func Test_ReadCharacterFileReturnsCharacterFromFile(t *testing.T) {
 		t.Fatalf("Error loading file: %v", err)
 	}
 
-	if c.Skills["cool"] != 3 {
-		t.Errorf("Expected Cool 3, got %d", c.Skills["cool"])
+	if c.Skills["Athletics"] != 1 {
+		t.Errorf("Expected Athletics 1, got %d", c.Skills["cool"])
 	}
 	if c.Name != "J. Marcus Hart" {
 		t.Errorf("Expected name 'J. Marcus Hart', got '%s'", c.Name)
@@ -144,4 +151,72 @@ func Test_ReadCharacterFileReturnsCharacterFromFile(t *testing.T) {
 	if c.Experience != 50 {
 		t.Errorf("Expected Experience 50, got %d", c.Experience)
 	}
+}
+
+func Test_readCharacterFileReturnsErrorGivenBogusFile(t *testing.T) {
+	c, err := ReadCharacterFile("bogus.file")
+	if err == nil {
+		t.Errorf("There was no Earth-shattering kaboom.  There was supposed to be an Earth-shattering kaboom.")
+	}
+	expectedmessage := "open bogus.file: The system cannot find the file specified."
+	if err.Error() != expectedmessage {
+		t.Errorf("Expected '%s', got '%s'", expectedmessage, err.Error())
+	}
+	if c.Name != "" {
+		t.Errorf("Expected empty character, got %v", c)
+	}
+}
+
+func Test_readCharacterFileReturnsErrorGivenNonCharacterFile(t *testing.T) {
+	_, err := ReadCharacterFile("character_test.go")
+	if err == nil {
+		t.Errorf("There was no Earth-shattering kaboom.  There was supposed to be an Earth-shattering kaboom")
+	}
+	expectedMessage := "yaml:"
+	if err.Error()[:5] != expectedMessage {
+		t.Errorf("Expected '%s', got '%s'", expectedMessage, err.Error())
+	}
+}
+
+func Test_ReadSkillFileReturnsListOfSkills(t *testing.T) {
+	c, _ := ReadSkillFile("testskills.skl")
+
+	if len(c) != 2 {
+		t.Fatalf("Expected 2 skills, found %d", len(c))
+	}
+
+	first := c[0]
+	if first.Name != "Athletics" || first.Ability != "Brawn" {
+		t.Errorf("Expected first skill to be Athletics (Brawn), got %s (%s)", first.Name, first.Ability)
+	}
+
+	second := c[1]
+	if second.Name != "Computers" || second.Ability != "Intellect" {
+		t.Errorf("Expected second skill to be Computers (Intellect), got %s (%s)", second.Name, second.Ability)
+	}
+}
+
+func checkSkill(actual CharacterSkill, name string, ability string, proficiencydice int, abilitydice int, t *testing.T) {
+	if actual.Name != name || actual.Ability != ability || actual.ProficiencyDice != proficiencydice || actual.AbilityDice != abilitydice {
+		t.Errorf("Expected %s (%s) %d/%d, got %s (%s) %d/%d",
+			name, ability, proficiencydice, abilitydice,
+			actual.Name, actual.Ability, actual.ProficiencyDice, actual.AbilityDice)
+	}
+}
+
+func Test_CalculateGivenValidSkillsCalculatesCharacterSkills(t *testing.T) {
+	c, err := ReadCharacterFile("testcharacter.gcr")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	cc, err := Calculate(*c, archetypes, skills)
+
+	if len(cc.Skills) != 2 {
+		t.Fatalf("Expected 2 skills, got %d", len(cc.Skills))
+	}
+
+	checkSkill(cc.Skills[0], "Athletics", "Brawn", 1, 0, t)
+	checkSkill(cc.Skills[1], "Computers", "Intellect", 2, 2, t)
+
 }
