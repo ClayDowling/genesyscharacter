@@ -3,6 +3,7 @@ package genesys
 import (
 	"fmt"
 	"io/ioutil"
+	"strings"
 
 	yaml "gopkg.in/yaml.v3"
 )
@@ -61,7 +62,7 @@ func FindArchetype(needle string, haystack []Archetype) (*Archetype, error) {
 	return nil, fmt.Errorf("Unknown Archetype '%s'", needle)
 }
 
-func calculateSkill(name string, level int, cc *CalculatedCharacter, skills *[]Skill) CharacterSkill {
+func calculateSkill(name string, level int, cc *CalculatedCharacter, skills *[]Skill) (CharacterSkill, error) {
 
 	var cs CharacterSkill
 	var skill Skill
@@ -71,41 +72,44 @@ func calculateSkill(name string, level int, cc *CalculatedCharacter, skills *[]S
 			break
 		}
 	}
+	if skill.Name == "" {
+		return cs, fmt.Errorf("Could not match skill '%s'", name)
+	}
 
 	cs.Ability = skill.Ability
 	cs.Name = skill.Name
 
 	var abilitylevel int
-	switch skill.Ability {
-	case "Agility":
+	switch strings.ToLower(skill.Ability) {
+	case "agility":
+		abilitylevel = cc.Agility
+	case "brawn":
 		abilitylevel = cc.Brawn
-	case "Brawn":
-		abilitylevel = cc.Brawn
-	case "Cunning":
-		abilitylevel = cc.Brawn
-	case "Intellect":
+	case "cunning":
+		abilitylevel = cc.Cunning
+	case "intellect":
 		abilitylevel = cc.Intellect
-	case "Presence":
-		abilitylevel = cc.Brawn
-	case "Will":
-		abilitylevel = cc.Brawn
+	case "presence":
+		abilitylevel = cc.Presence
+	case "will":
+		abilitylevel = cc.Will
 	}
 
 	cs.ProficiencyDice = level
 	cs.AbilityDice = abilitylevel - level
 
-	return cs
+	return cs, nil
 }
 
 // Calculate takes the character and known archetypes, returns a fully calculated character
-func Calculate(character Character, archetypes []Archetype, skills []Skill) (*CalculatedCharacter, error) {
+func Calculate(character Character, archetypes []Archetype, skills []Skill) (CalculatedCharacter, error) {
+
+	var c CalculatedCharacter
 
 	a, err := FindArchetype(character.Archetype, archetypes)
 	if err != nil {
-		return nil, err
+		return c, err
 	}
-
-	var c CalculatedCharacter
 
 	c.Name = character.Name
 
@@ -119,11 +123,14 @@ func Calculate(character Character, archetypes []Archetype, skills []Skill) (*Ca
 	c.Will = a.Will + character.Will
 
 	for k, v := range character.Skills {
-		cs := calculateSkill(k, v, &c, &skills)
+		cs, err := calculateSkill(k, v, &c, &skills)
+		if err != nil {
+			return c, err
+		}
 		c.Skills = append(c.Skills, cs)
 	}
 
-	return &c, nil
+	return c, nil
 }
 
 func readYamlFile(filename string, dest interface{}) error {
@@ -141,10 +148,10 @@ func readYamlFile(filename string, dest interface{}) error {
 }
 
 // ReadCharacterFile reads a single character file
-func ReadCharacterFile(filename string) (*Character, error) {
+func ReadCharacterFile(filename string) (Character, error) {
 	var c Character
 	err := readYamlFile(filename, &c)
-	return &c, err
+	return c, err
 }
 
 // ReadSkillFile loads skills from a file and returns them in an array.

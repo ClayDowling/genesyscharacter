@@ -32,7 +32,7 @@ func findArchetype(needle string, haystack []Archetype, t *testing.T) Archetype 
 	return e
 }
 
-func IsExpectedCalculatedCharacter(cc *CalculatedCharacter, expected *CalculatedCharacter, t *testing.T) {
+func IsExpectedCalculatedCharacter(cc CalculatedCharacter, expected CalculatedCharacter, t *testing.T) {
 	if cc.Agility != expected.Agility {
 		t.Errorf("Expected Agility %d, got %d", expected.Agility, cc.Agility)
 	}
@@ -74,7 +74,7 @@ func Test_CalculateCharacter_WithArchetype_GivesCharacterWithArchetype(t *testin
 
 	cc, _ := Calculate(c, archetypes, skills)
 
-	IsExpectedCalculatedCharacter(cc, &expected, t)
+	IsExpectedCalculatedCharacter(cc, expected, t)
 }
 
 func Test_Calculate_CopiesCharacterNameToCalculatedCharacter(t *testing.T) {
@@ -119,7 +119,7 @@ func Test_CalculateAddsCharacterTraitsToArchetypeTraits(t *testing.T) {
 
 	cc, _ := Calculate(c, archetypes, skills)
 
-	IsExpectedCalculatedCharacter(cc, &expected, t)
+	IsExpectedCalculatedCharacter(cc, expected, t)
 
 }
 
@@ -210,7 +210,7 @@ func Test_CalculateGivenValidSkillsCalculatesCharacterSkills(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	cc, err := Calculate(*c, archetypes, skills)
+	cc, err := Calculate(c, archetypes, skills)
 
 	if len(cc.Skills) != 2 {
 		t.Fatalf("Expected 2 skills, got %d", len(cc.Skills))
@@ -219,4 +219,91 @@ func Test_CalculateGivenValidSkillsCalculatesCharacterSkills(t *testing.T) {
 	checkSkill(cc.Skills[0], "Athletics", "Brawn", 1, 0, t)
 	checkSkill(cc.Skills[1], "Computers", "Intellect", 2, 2, t)
 
+}
+
+func findSkill(cc CalculatedCharacter, name string) CharacterSkill {
+	for _, s := range cc.Skills {
+		if s.Name == name {
+			return s
+		}
+	}
+	var emptySkill CharacterSkill
+	return emptySkill
+}
+
+func Test_CalculateGivenSkillAssignsLevelBasedOnCorrectAttribute(t *testing.T) {
+	c, err := ReadCharacterFile("testcharacter.gcr")
+	if err != nil {
+		t.Fatal(err)
+	}
+	cunningSkill := Skill{
+		Name:    "Cunning Skill",
+		Ability: "Cunning",
+	}
+	agilitySkill := Skill{
+		Name:    "Agility Skill",
+		Ability: "Agility",
+	}
+	presenceSkill := Skill{
+		Name:    "Presence Skill",
+		Ability: "Presence",
+	}
+	willSkill := Skill{
+		Name:    "Will Skill",
+		Ability: "Will",
+	}
+
+	skills = append(skills, cunningSkill, agilitySkill, presenceSkill, willSkill)
+
+	c.Skills["Cunning Skill"] = 1
+	c.Skills["Agility Skill"] = 2
+	c.Skills["Presence Skill"] = 3
+	c.Skills["Will Skill"] = 4
+	c.Agility = 1
+	c.Brawn = 2
+	c.Cunning = 3
+	c.Intellect = 4
+	c.Presence = 5
+	c.Will = 6
+
+	cc, err := Calculate(c, archetypes, skills)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	cs := findSkill(cc, "Cunning Skill")
+	if cs.ProficiencyDice != 1 || cs.ProficiencyDice+cs.AbilityDice != cc.Cunning {
+		t.Errorf("Bad %s (%s: %d) %d/%d", cs.Name, cs.Ability, cc.Cunning, cs.ProficiencyDice, cs.AbilityDice)
+	}
+	as := findSkill(cc, "Agility Skill")
+	if as.ProficiencyDice != 2 || as.ProficiencyDice+as.AbilityDice != cc.Agility {
+		t.Errorf("Bad %s (%s: %d) %d/%d", as.Name, as.Ability, cc.Agility, as.ProficiencyDice, as.AbilityDice)
+	}
+	ps := findSkill(cc, "Presence Skill")
+	if ps.ProficiencyDice != 3 || ps.ProficiencyDice+ps.AbilityDice != cc.Presence {
+		t.Errorf("Bad %s (%s: %d) %d/%d", ps.Name, ps.Ability, cc.Presence, ps.ProficiencyDice, ps.AbilityDice)
+	}
+	ws := findSkill(cc, "Will Skill")
+	if ws.ProficiencyDice != 4 || (ws.ProficiencyDice+ws.AbilityDice != cc.Will) {
+		t.Errorf("Bad %s (%s: %d) %d/%d", ws.Name, ws.Ability, cc.Will, ws.ProficiencyDice, ws.AbilityDice)
+	}
+
+}
+
+func Test_CalculateGivenInvalidSkillThrowsError(t *testing.T) {
+	c, err := ReadCharacterFile("testcharacter.gcr")
+	if err != nil {
+		t.Fatal(err)
+	}
+	c.Skills["Bogus"] = 1
+
+	_, err = Calculate(c, archetypes, skills)
+	if err == nil {
+		t.Fatal("There was supposed to be an Earth-shattering kaboom.  There was no Earth-shattering kaboom.")
+	}
+
+	expectedMessage := "Could not match skill 'Bogus'"
+	if err.Error() != expectedMessage {
+		t.Fatalf("Expected error '%s', got '%s'", expectedMessage, err.Error())
+	}
 }
