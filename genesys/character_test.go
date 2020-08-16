@@ -3,6 +3,7 @@ package genesys
 import (
 	"log"
 	"os"
+	"strings"
 	"testing"
 )
 
@@ -11,7 +12,7 @@ var skills []Skill
 
 func TestMain(m *testing.M) {
 	var err error
-	archetypes = ReadArchetypeFile("testfile.arc")
+	archetypes, _ = ReadArchetypeFile("testfile.arc")
 	skills, err = ReadSkillFile("testskills.skl")
 	if err != nil {
 		log.Fatal(err.Error())
@@ -158,8 +159,8 @@ func Test_readCharacterFileReturnsErrorGivenBogusFile(t *testing.T) {
 	if err == nil {
 		t.Errorf("There was no Earth-shattering kaboom.  There was supposed to be an Earth-shattering kaboom.")
 	}
-	expectedmessage := "open bogus.file: The system cannot find the file specified."
-	if err.Error() != expectedmessage {
+	expectedmessage := "open bogus.file:"
+	if strings.Contains(err.Error(), expectedmessage) == false {
 		t.Errorf("Expected '%s', got '%s'", expectedmessage, err.Error())
 	}
 	if c.Name != "" {

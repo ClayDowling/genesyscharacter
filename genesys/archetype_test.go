@@ -5,7 +5,7 @@ import (
 )
 
 func Test_ReadArchetypeFileReturnsCorrectNumberOfArchetypes(t *testing.T) {
-	actual := ReadArchetypeFile("testfile.arc")
+	actual, _ := ReadArchetypeFile("testfile.arc")
 	if len(actual) != 2 {
 		t.Errorf("Expected 2 archetypes, found %d", len(actual))
 	}
@@ -46,7 +46,7 @@ func doesArchetypeMatch(expected Archetype, actual Archetype, t *testing.T) {
 }
 
 func Test_ReadArchetypeFileReturnsExpectedArchetypes(t *testing.T) {
-	actual := ReadArchetypeFile("testfile.arc")
+	actual, _ := ReadArchetypeFile("testfile.arc")
 
 	intellectual := Archetype{
 		Name:       "The Intellectual",
@@ -76,14 +76,14 @@ func Test_ReadArchetypeFileReturnsExpectedArchetypes(t *testing.T) {
 }
 
 func Test_ReadArchetypeFileReturnsEmptyListWhenBadFileName(t *testing.T) {
-	actual := ReadArchetypeFile("bogus.arc")
+	actual, _ := ReadArchetypeFile("bogus.arc")
 	if len(actual) != 0 {
 		t.Errorf("Expected 0 entries, got %d", len(actual))
 	}
 }
 
 func Test_ReadArchetypeFileReturnsEmptyListWhenGetsNonArchetypeFile(t *testing.T) {
-	actual := ReadArchetypeFile("archetype_test.go")
+	actual, _ := ReadArchetypeFile("archetype_test.go")
 	if len(actual) != 0 {
 		t.Errorf("Expected 0 entries, got %d", len(actual))
 	}

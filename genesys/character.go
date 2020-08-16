@@ -8,6 +8,20 @@ import (
 	yaml "gopkg.in/yaml.v3"
 )
 
+// Archetype represents a character archetype
+type Archetype struct {
+	Name       string
+	Brawn      int
+	Agility    int
+	Intellect  int
+	Cunning    int
+	Will       int
+	Presence   int
+	Wound      int
+	Strain     int
+	Experience int
+}
+
 // Skill represents a skill, which may be applied to a Character to become a CharacterSkill
 type Skill struct {
 	Name    string
@@ -160,4 +174,12 @@ func ReadSkillFile(filename string) ([]Skill, error) {
 	var s []Skill
 	err := readYamlFile(filename, &s)
 	return s, err
+}
+
+// ReadArchetypeFile loads archetypes from the listed file, returns
+// an empty list and error on failure
+func ReadArchetypeFile(filename string) ([]Archetype, error) {
+	var a []Archetype
+	err := readYamlFile(filename, &a)
+	return a, err
 }
