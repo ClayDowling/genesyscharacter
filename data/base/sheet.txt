@@ -1,0 +1,19 @@
+{{define "skill"}}{{with . }}{{ .Name | printf "%-20s" }} {{ .Ability | printf "(%s)" | printf "%11s" }} {{ .ProficiencyDice }}/{{ .AbilityDice }}{{end}}{{end}}  
+
+Name:       {{ .Name | printf "%-30s" }}   Experience: {{ .Experience }}
+Player:                                      Unspent XP:
+Archetype:  {{ .Archetype | printf "%-30s" }}
+Profession:
+
+
+                    Characteristics
+
+Brawn  Agility  Intellect  Cunning  Willpower  Presence
+
+
+--------------------------------------------------------------------------
+                              Skills
+
+
+{{ range .Skills }}{{template "skill" . }}
+{{end}}
