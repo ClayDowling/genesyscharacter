@@ -1,15 +1,16 @@
 {{define "skill"}}{{with . }}{{ .Name | printf "%-20s" }} {{ .Ability | printf "(%s)" | printf "%11s" }} {{ .ProficiencyDice }}/{{ .AbilityDice }}{{end}}{{end}}  
 
 Name:       {{ .Name | printf "%-30s" }}   Experience: {{ .Experience }}
-Player:                                      Unspent XP:
+Player:     {{ .Player | printf "%-30s" }}   Unspent XP:
 Archetype:  {{ .Archetype | printf "%-30s" }}
-Profession:
+Profession: {{ .Profession }}
 
 
                     Characteristics
 
 Brawn  Agility  Intellect  Cunning  Willpower  Presence
-
+-----  -------  ---------  -------  ---------  --------
+  {{ .Brawn }}       {{ .Agility }}         {{ .Intellect }}         {{ .Cunning }}         {{ .Will }}         {{ .Presence }}
 
 --------------------------------------------------------------------------
                               Skills

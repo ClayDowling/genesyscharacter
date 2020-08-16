@@ -217,8 +217,8 @@ func Test_CalculateGivenValidSkillsCalculatesCharacterSkills(t *testing.T) {
 		t.Fatalf("Expected 2 skills, got %d", len(cc.Skills))
 	}
 
-	checkSkill(cc.Skills[0], "Athletics", "Brawn", 1, 0, t)
-	checkSkill(cc.Skills[1], "Computers", "Intellect", 2, 2, t)
+	checkSkill(cc.Skills["Athletics"], "Athletics", "Brawn", 1, 0, t)
+	checkSkill(cc.Skills["Computers"], "Computers", "Intellect", 2, 2, t)
 
 }
 
@@ -291,20 +291,22 @@ func Test_CalculateGivenSkillAssignsLevelBasedOnCorrectAttribute(t *testing.T) {
 
 }
 
-func Test_CalculateGivenInvalidSkillThrowsError(t *testing.T) {
+func Test_CalculateGivesDefaultsForSkillsNotPresentOnCharacter(t *testing.T) {
 	c, err := ReadCharacterFile("testcharacter.gcr")
 	if err != nil {
 		t.Fatal(err)
 	}
-	c.Skills["Bogus"] = 1
-
-	_, err = Calculate(c, archetypes, skills)
-	if err == nil {
-		t.Fatal("There was supposed to be an Earth-shattering kaboom.  There was no Earth-shattering kaboom.")
+	presenceSkill := Skill{
+		Name:    "Presence Skill",
+		Ability: "Presence",
 	}
-
-	expectedMessage := "Could not match skill 'Bogus'"
-	if err.Error() != expectedMessage {
-		t.Fatalf("Expected error '%s', got '%s'", expectedMessage, err.Error())
+	skills = append(skills, presenceSkill)
+	cc, err := Calculate(c, archetypes, skills)
+	s := cc.Skills["Presence Skill"]
+	if s.ProficiencyDice != 0 {
+		t.Errorf("Expected 0 profeciency dice, got %d", s.ProficiencyDice)
+	}
+	if s.AbilityDice != 4 {
+		t.Errorf("Expected 4 ability dice, got %d", s.AbilityDice)
 	}
 }

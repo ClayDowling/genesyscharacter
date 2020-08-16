@@ -39,6 +39,8 @@ type CharacterSkill struct {
 // by the player.
 type Character struct {
 	Name       string
+	Player     string
+	Profession string
 	Archetype  string
 	Brawn      int
 	Agility    int
@@ -54,6 +56,8 @@ type Character struct {
 type CalculatedCharacter struct {
 	Name       string
 	Archetype  string
+	Player     string
+	Profession string
 	Brawn      int
 	Agility    int
 	Intellect  int
@@ -61,7 +65,7 @@ type CalculatedCharacter struct {
 	Will       int
 	Presence   int
 	Experience int
-	Skills     []CharacterSkill
+	Skills     map[string]CharacterSkill
 }
 
 // FindArchetype searches for needing in a haystack of archetypes.
@@ -126,7 +130,8 @@ func Calculate(character Character, archetypes []Archetype, skills []Skill) (Cal
 	}
 
 	c.Name = character.Name
-
+	c.Player = character.Player
+	c.Profession = character.Profession
 	c.Agility = a.Agility + character.Agility
 	c.Archetype = a.Name
 	c.Brawn = a.Brawn + character.Brawn
@@ -136,12 +141,17 @@ func Calculate(character Character, archetypes []Archetype, skills []Skill) (Cal
 	c.Presence = a.Presence + character.Presence
 	c.Will = a.Will + character.Will
 
-	for k, v := range character.Skills {
-		cs, err := calculateSkill(k, v, &c, &skills)
+	c.Skills = make(map[string]CharacterSkill)
+	for _, s := range skills {
+		level, ok := character.Skills[s.Name]
+		if !ok {
+			level = 0
+		}
+		cs, err := calculateSkill(s.Name, level, &c, &skills)
 		if err != nil {
 			return c, err
 		}
-		c.Skills = append(c.Skills, cs)
+		c.Skills[cs.Name] = cs
 	}
 
 	return c, nil
