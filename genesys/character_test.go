@@ -1,22 +1,17 @@
 package genesys
 
 import (
-	"log"
 	"os"
 	"strings"
 	"testing"
 )
 
-var archetypes []Archetype
-var skills []Skill
+var setting Setting
 
 func TestMain(m *testing.M) {
-	var err error
-	archetypes, _ = ReadArchetypeFile("testfile.arc")
-	skills, err = ReadSkillFile("testskills.skl")
-	if err != nil {
-		log.Fatal(err.Error())
-	}
+
+	setting = ReadSetting("testdata", ".")
+
 	os.Exit(m.Run())
 }
 
@@ -61,7 +56,7 @@ func Test_CalculateCharacter_WithArchetype_GivesCharacterWithArchetype(t *testin
 	var c Character
 	c.Archetype = "The Intellectual"
 
-	a := findArchetype(c.Archetype, archetypes, t)
+	a := findArchetype(c.Archetype, setting.Archetypes, t)
 
 	var expected CalculatedCharacter
 	expected.Archetype = a.Name
@@ -73,7 +68,7 @@ func Test_CalculateCharacter_WithArchetype_GivesCharacterWithArchetype(t *testin
 	expected.Presence = a.Presence
 	expected.Will = a.Will
 
-	cc, _ := Calculate(c, archetypes, skills)
+	cc, _ := Calculate(c, setting)
 
 	IsExpectedCalculatedCharacter(cc, expected, t)
 }
@@ -84,7 +79,7 @@ func Test_Calculate_CopiesCharacterNameToCalculatedCharacter(t *testing.T) {
 	c.Name = "Wilberforce"
 	c.Archetype = "The Intellectual"
 
-	cc, _ := Calculate(c, archetypes, skills)
+	cc, _ := Calculate(c, setting)
 
 	if cc.Name != c.Name {
 		t.Errorf("Expected name '%s', got '%s'", c.Name, cc.Name)
@@ -105,7 +100,7 @@ func Test_CalculateAddsCharacterTraitsToArchetypeTraits(t *testing.T) {
 	c.Presence = 7
 	c.Will = 8
 
-	a := findArchetype(c.Archetype, archetypes, t)
+	a := findArchetype(c.Archetype, setting.Archetypes, t)
 
 	var expected CalculatedCharacter
 	expected.Archetype = c.Archetype
@@ -118,7 +113,7 @@ func Test_CalculateAddsCharacterTraitsToArchetypeTraits(t *testing.T) {
 	expected.Presence = c.Presence + a.Presence
 	expected.Will = c.Will + a.Will
 
-	cc, _ := Calculate(c, archetypes, skills)
+	cc, _ := Calculate(c, setting)
 
 	IsExpectedCalculatedCharacter(cc, expected, t)
 
@@ -128,7 +123,7 @@ func Test_CalculateGivenBogusArchetypeReturnsError(t *testing.T) {
 	var c Character
 	c.Archetype = "Bogus"
 
-	_, err := Calculate(c, archetypes, skills)
+	_, err := Calculate(c, setting)
 	if err == nil {
 		t.Errorf("Expected earth shattering kaboom.  There was no earth shattering kaboom.")
 	}
@@ -180,7 +175,7 @@ func Test_readCharacterFileReturnsErrorGivenNonCharacterFile(t *testing.T) {
 }
 
 func Test_ReadSkillFileReturnsListOfSkills(t *testing.T) {
-	c, _ := ReadSkillFile("testskills.skl")
+	c := setting.Skills
 
 	if len(c) != 2 {
 		t.Fatalf("Expected 2 skills, found %d", len(c))
@@ -211,7 +206,7 @@ func Test_CalculateGivenValidSkillsCalculatesCharacterSkills(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	cc, err := Calculate(c, archetypes, skills)
+	cc, err := Calculate(c, setting)
 
 	if len(cc.Skills) != 2 {
 		t.Fatalf("Expected 2 skills, got %d", len(cc.Skills))
@@ -254,7 +249,7 @@ func Test_CalculateGivenSkillAssignsLevelBasedOnCorrectAttribute(t *testing.T) {
 		Ability: "Will",
 	}
 
-	skills = append(skills, cunningSkill, agilitySkill, presenceSkill, willSkill)
+	setting.Skills = append(setting.Skills, cunningSkill, agilitySkill, presenceSkill, willSkill)
 
 	c.Skills["Cunning Skill"] = 1
 	c.Skills["Agility Skill"] = 2
@@ -267,7 +262,7 @@ func Test_CalculateGivenSkillAssignsLevelBasedOnCorrectAttribute(t *testing.T) {
 	c.Presence = 5
 	c.Will = 6
 
-	cc, err := Calculate(c, archetypes, skills)
+	cc, err := Calculate(c, setting)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -300,8 +295,8 @@ func Test_CalculateGivesDefaultsForSkillsNotPresentOnCharacter(t *testing.T) {
 		Name:    "Presence Skill",
 		Ability: "Presence",
 	}
-	skills = append(skills, presenceSkill)
-	cc, err := Calculate(c, archetypes, skills)
+	setting.Skills = append(setting.Skills, presenceSkill)
+	cc, err := Calculate(c, setting)
 	s := cc.Skills["Presence Skill"]
 	if s.ProficiencyDice != 0 {
 		t.Errorf("Expected 0 profeciency dice, got %d", s.ProficiencyDice)

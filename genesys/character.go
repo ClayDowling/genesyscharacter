@@ -3,10 +3,16 @@ package genesys
 import (
 	"fmt"
 	"io/ioutil"
+	"log"
+	"os"
+	"path/filepath"
 	"strings"
 
 	yaml "gopkg.in/yaml.v3"
 )
+
+// SettingDefaultLocation will load settings from the main distribution location.
+const SettingDefaultLocation = "__default__"
 
 // Archetype represents a character archetype
 type Archetype struct {
@@ -35,6 +41,21 @@ type CharacterSkill struct {
 	Skill
 }
 
+// Talent describes a talent from the rule book
+type Talent struct {
+	Name   string
+	Tier   int
+	Ranked bool
+	Gives  string
+}
+
+// CharacterTalent describes a talent as applied to a character, taking into account multiple
+// occurrances for ranked talents.
+type CharacterTalent struct {
+	Level int
+	Talent
+}
+
 // Character represents the additions made to the character beyond the archetype,
 // by the player.
 type Character struct {
@@ -50,6 +71,14 @@ type Character struct {
 	Presence   int
 	Experience int
 	Skills     map[string]int
+	Talents    []string
+}
+
+// Setting provides the defined components of the setting the character was built in.
+type Setting struct {
+	Archetypes []Archetype
+	Skills     []Skill
+	Talents    []Talent
 }
 
 // CalculatedCharacter is the result of Calculate, with archetype, skills, and feats applied
@@ -66,6 +95,7 @@ type CalculatedCharacter struct {
 	Presence   int
 	Experience int
 	Skills     map[string]CharacterSkill
+	Talents    map[string]CharacterTalent
 }
 
 // FindArchetype searches for needing in a haystack of archetypes.
@@ -120,11 +150,11 @@ func calculateSkill(name string, level int, cc *CalculatedCharacter, skills *[]S
 }
 
 // Calculate takes the character and known archetypes, returns a fully calculated character
-func Calculate(character Character, archetypes []Archetype, skills []Skill) (CalculatedCharacter, error) {
+func Calculate(character Character, setting Setting) (CalculatedCharacter, error) {
 
 	var c CalculatedCharacter
 
-	a, err := FindArchetype(character.Archetype, archetypes)
+	a, err := FindArchetype(character.Archetype, setting.Archetypes)
 	if err != nil {
 		return c, err
 	}
@@ -142,12 +172,12 @@ func Calculate(character Character, archetypes []Archetype, skills []Skill) (Cal
 	c.Will = a.Will + character.Will
 
 	c.Skills = make(map[string]CharacterSkill)
-	for _, s := range skills {
+	for _, s := range setting.Skills {
 		level, ok := character.Skills[s.Name]
 		if !ok {
 			level = 0
 		}
-		cs, err := calculateSkill(s.Name, level, &c, &skills)
+		cs, err := calculateSkill(s.Name, level, &c, &setting.Skills)
 		if err != nil {
 			return c, err
 		}
@@ -192,4 +222,51 @@ func ReadArchetypeFile(filename string) ([]Archetype, error) {
 	var a []Archetype
 	err := readYamlFile(filename, &a)
 	return a, err
+}
+
+// ReadTalentFile loads talents from the listed file, returns
+// an empty list and error on failure
+func ReadTalentFile(filename string) ([]Talent, error) {
+	var t []Talent
+	err := readYamlFile(filename, &t)
+	return t, err
+}
+
+// ReadSetting will find a folder with the necessary name and read the files
+// which define the setting.
+//
+// name:      name of the setting, which matches a folder in the setting directory
+// sourcedir: folder to search for setting directories.  In normal usage SettingDefaultLocation
+//            will search under the data folder where the executable lives.
+func ReadSetting(name string, sourcedir string) Setting {
+	var s Setting
+	var err interface{}
+	var base string
+
+	if sourcedir == SettingDefaultLocation {
+		exe, err := os.Executable()
+		if err != nil {
+			log.Fatal(err)
+		}
+		base = filepath.Join(filepath.Dir(exe), "data")
+	} else {
+		base = sourcedir
+	}
+	archetypesfile := filepath.Join(base, name, "archetypes.yaml")
+	skillsfile := filepath.Join(base, name, "skills.yaml")
+	talentsfile := filepath.Join(base, name, "talents.yaml")
+
+	s.Archetypes, err = ReadArchetypeFile(archetypesfile)
+	if err != nil {
+		log.Fatalf("Could not read %s", archetypesfile)
+	}
+	s.Skills, err = ReadSkillFile(skillsfile)
+	if err != nil {
+		log.Fatalf("Could not read %s", skillsfile)
+	}
+	s.Talents, err = ReadTalentFile(talentsfile)
+	if err != nil {
+		log.Fatalf("Could not read %s", talentsfile)
+	}
+	return s
 }

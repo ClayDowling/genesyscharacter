@@ -1,0 +1,10 @@
+- name: Desperate Recovery
+  tier: 1
+- name: Grit
+  tier: 1
+  ranked: true
+  gives: strain
+- name: Coordinated Assault
+  tier: 2
+  ranked: true
+  
